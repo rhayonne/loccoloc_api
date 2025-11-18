@@ -1,6 +1,12 @@
 import { Garant } from 'src/resources/garant/entities/garant.entity';
-import { UserRole } from '../schemas/user.schemas';
-import { IsEmail, IsNotEmpty, MinLength, minLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsIBAN,
+  IsNotEmpty,
+  MinLength,
+} from 'class-validator';
+import { UserRole } from 'src/resources/support/enum';
 
 export class CreateUserDto {
   @IsNotEmpty({ message: 'Le champ email est obligatoire.' })
@@ -18,6 +24,9 @@ export class CreateUserDto {
   password: string;
 
   @IsNotEmpty({ message: 'Le champ Role est obligatoire.' })
+  @IsEnum(UserRole, {
+    message: ` La valeur du champ Role doit être un valeur connu.`,
+  })
   role: UserRole;
 
   @IsNotEmpty({ message: 'Le champ prè-nom est obligatoire.' })
@@ -25,6 +34,9 @@ export class CreateUserDto {
 
   @IsNotEmpty({ message: 'Le champ Nom est obligatoire.' })
   lastName: string;
+
+  @IsIBAN()
+  iban: string;
 
   phone: string;
 

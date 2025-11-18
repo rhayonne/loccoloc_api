@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ValidationPipe,
+} from '@nestjs/common';
 import { GarantService } from './garant.service';
 import { CreateGarantDto } from './dto/create-garant.dto';
 import { UpdateGarantDto } from './dto/update-garant.dto';
@@ -8,7 +17,7 @@ export class GarantController {
   constructor(private readonly garantService: GarantService) {}
 
   @Post()
-  create(@Body() createGarantDto: CreateGarantDto) {
+  create(@Body(ValidationPipe) createGarantDto: CreateGarantDto) {
     return this.garantService.create(createGarantDto);
   }
 
@@ -23,7 +32,10 @@ export class GarantController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGarantDto: UpdateGarantDto) {
+  update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updateGarantDto: UpdateGarantDto,
+  ) {
     return this.garantService.update(+id, updateGarantDto);
   }
 
