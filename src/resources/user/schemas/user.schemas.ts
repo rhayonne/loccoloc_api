@@ -3,6 +3,7 @@ import { HydratedDocument, Types, ValidatorProps } from 'mongoose';
 import { UserRole } from 'src/resources/support/enum';
 import { Garant } from 'src/resources/garant/schema/garant.schema';
 import { emailRegex } from 'src/resources/support/support';
+import * as bcrypt from 'bcrypt';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -20,7 +21,7 @@ export class User {
   })
   email: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, select: false })
   password: string;
 
   @Prop({ enum: UserRole, default: UserRole.LOCATAIRE })
@@ -45,4 +46,20 @@ export class User {
   garants: Garant[];
 }
 
-export const DocumentNameSchema = SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.pre('save', async function (next) {
+  const user = this;
+
+  if (!user.isModified('password')) {
+    return next();
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    user.password = hashedPassword;
+    next();
+  } catch (error) {
+    return next(error);
+  }
+});
