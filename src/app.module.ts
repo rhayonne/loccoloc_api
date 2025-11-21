@@ -29,6 +29,8 @@ import { HttpExceptionFilter } from './util/errors/http-exceptions';
     AuthService,
     // Bloq l'accès à tous les route! Utiliser @Public() pour transformer la route en une route ouverte.
     { provide: APP_GUARD, useClass: AuthGuard('jwt') },
+
+    // Traiter les erreurs (customisatin des erreurs)
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
