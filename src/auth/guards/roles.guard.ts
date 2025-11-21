@@ -16,14 +16,13 @@ export class RolesGuard implements CanActivate {
     ]);
 
     /* !!IMPORTANT pour le requiredRoles
-        le boolean permettra ou non l'accès de la route que n'a pas le decorator @Roles
         true = > permettre l'accès 
         false = > ne permettre pas l'accès
     */
     if (!requiredRoles) {
       return true;
     }
-    // prends l'utilisateur de la requisition (JwtStrategy)
+    // Prend l'utilisateur de la requisition (JwtStrategy)
     const { user } = context.switchToHttp().getRequest();
     // Verifie si le role de l'utisisateur a les role necessaire pour accèder la route
     return requiredRoles.some((role) => user.role === role);
