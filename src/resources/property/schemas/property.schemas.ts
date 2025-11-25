@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { TypesProperty } from 'src/resources/types_property/schemas/types_property.schemas';
+import { User } from 'src/resources/user/schemas/user.schemas';
 
 export type PropertyDocument = HydratedDocument<Property>;
 
@@ -29,10 +30,13 @@ export class Property {
   location: string;
 
   @Prop({ required: true })
-  images: string[];
+  imagesProperty: string[];
 
-  @Prop({ required: true })
-  owner: Types.ObjectId;
+  @Prop({ required: true, type: [{ type: Types.ObjectId, ref: 'Room' }] })
+  rooms: Types.ObjectId[];
+
+  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  owner: User;
 }
 
 export const PropertySchema = SchemaFactory.createForClass(Property);
