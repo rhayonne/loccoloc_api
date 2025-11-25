@@ -1,0 +1,28 @@
+{
+  "git.autofetch": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+
+  // --- Formatting ---
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.formatOnSave": true,
+  "editor.detectIndentation": false,
+
+  // --- ESLint + Flat Config (eslint.config.mjs) ---
+  "eslint.validate": ["typescript"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+
+  // Avoid conflict between Prettier and VSCode
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  "[typescript]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[javascript]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  }
+}

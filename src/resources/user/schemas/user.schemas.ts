@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types, ValidatorProps } from 'mongoose';
 import { UserRole } from 'src/resources/support/enum';
-import { Garant } from 'src/resources/garant/schema/garant.schema';
+import { Garant } from 'src/resources/garant/schemas/garant.schema';
 import { emailRegex } from 'src/resources/support/support';
 import * as bcrypt from 'bcrypt';
 
@@ -42,6 +42,7 @@ export class User {
   @Prop({})
   adress: string;
 
+  // ref 1 x n
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Garant' }] })
   garants: Garant[];
 }
