@@ -3,6 +3,8 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type TypesPropertyDocument = HydratedDocument<TypesProperty>;
 
+// types property : Appartement - Maison etc.
+
 @Schema()
 export class TypesProperty {
   @Prop({ required: true })
