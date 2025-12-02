@@ -21,7 +21,7 @@ export class Rooms {
   @Prop({ type: Types.ObjectId, ref: 'Property', default: null })
   property: Types.ObjectId;
 
-  // Flag to control if the room has already been attached to a property
+  // Flag to control if the room has already been attached to a locataire
   @Prop({ default: true })
   isAvailable: boolean;
 }

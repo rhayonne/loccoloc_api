@@ -27,7 +27,7 @@ export class GarantController {
 
   @Get()
   findAll(@Request() req: any) {
-    return this.garantService.findAll();
+    return this.garantService.findAll(req.user.ownerId);
   }
 
   @Get(':id')
