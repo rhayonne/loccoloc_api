@@ -11,7 +11,7 @@
   // --- ESLint + Flat Config (eslint.config.mjs) ---
   "eslint.validate": ["typescript"],
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
 
   // Avoid conflict between Prettier and VSCode

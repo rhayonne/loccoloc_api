@@ -1,4 +1,3 @@
-import { Garant } from 'src/resources/garant/entities/garant.entity';
 import {
   IsEmail,
   IsEnum,
@@ -44,5 +43,5 @@ export class CreateUserDto {
 
   adress: string;
 
-  garants: Garant[];
+  garants: string[];
 }

@@ -18,7 +18,7 @@ export class CreatePropertyDto {
   price: number;
 
   @IsOptional()
-  typeProperty?: Types.ObjectId;
+  typeProperty?: string;
 
   @IsOptional()
   @IsString()
@@ -33,5 +33,6 @@ export class CreatePropertyDto {
   @IsString({ each: true })
   roomIds?: string[]; // IDs of rooms to be attached
 
-  owner: Types.ObjectId;
+  @IsString()
+  owner: string;
 }
