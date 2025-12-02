@@ -11,10 +11,15 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { GarantService } from '../garant/garant.service';
+import { CreateGarantDto } from '../garant/dto/create-garant.dto';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly garantService: GarantService,
+  ) {}
 
   @Post()
   create(@Body(ValidationPipe) createUserDto: CreateUserDto) {
@@ -28,7 +33,7 @@ export class UserController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+    return this.userService.findOne(id);
   }
 
   @Patch(':id')
@@ -36,11 +41,21 @@ export class UserController {
     @Param('id') id: string,
     @Body(ValidationPipe) updateUserDto: UpdateUserDto,
   ) {
-    return this.userService.update(+id, updateUserDto);
+    return this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+    return this.userService.remove(id);
+  }
+
+  @Post(':userId/garant')
+  async addGarant(
+    @Param('userId') userId: string,
+    //This veriofys if user is  "Locataire"
+    @Body(ValidationPipe) createGarantDto: CreateGarantDto,
+  ) {
+    const newGarant = await this.garantService.create(createGarantDto);
+    return this.userService.addGarantToUser(userId, newGarant._id);
   }
 }

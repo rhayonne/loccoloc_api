@@ -10,7 +10,7 @@ export const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 /* IBAN VALIDATION*/
 const countriesAccepteds = ['FR'];
 @ValidatorConstraint({ name: 'isFrIBAN', async: false })
-export class IsFrIBANConstraint implements ValidatorConstraintInterface {
+export class ValidationRIB implements ValidatorConstraintInterface {
   validate(iban: string, args: ValidationArguments): boolean {
     if (!iban || typeof iban !== 'string' || iban.length < 2) {
       return false;

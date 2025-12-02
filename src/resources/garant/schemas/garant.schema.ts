@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsEmail, isIBAN, IsIBAN, Validate, validate } from 'class-validator';
 import { HydratedDocument, Types } from 'mongoose';
-import { IsFrIBANConstraint } from 'src/resources/support/support';
 
 export type GarantDocument = HydratedDocument<Garant>;
 
@@ -29,9 +28,10 @@ export class Garant {
   email: string;
 
   @Prop({})
-  @IsIBAN({ message: `Le RIB doit suivre le format inernational IBAN.` })
-  @Validate(IsFrIBANConstraint)
   rib: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'Use', required: true })
+  owner: Types.ObjectId;
 }
 
 export const GarantSchema = SchemaFactory.createForClass(Garant);

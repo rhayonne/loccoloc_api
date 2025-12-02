@@ -101,7 +101,9 @@ export class PropertyService {
     const property = await this.propertyModel.findById(id);
 
     if (!property) {
-      throw new NotFoundException(`Property with ID ${id} not found`);
+      throw new NotFoundException(
+        `Erreur dans la tentative de supprimer la proprieté`,
+      );
     }
 
     // Detach all rooms before deleting the property

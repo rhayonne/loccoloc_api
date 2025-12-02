@@ -1,26 +1,73 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateGarantDto } from './dto/create-garant.dto';
 import { UpdateGarantDto } from './dto/update-garant.dto';
+import { Garant, GarantDocument } from './schemas/garant.schema';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class GarantService {
-  create(createGarantDto: CreateGarantDto) {
-    return 'This action adds a new garant';
+  constructor(
+    @InjectModel(Garant.name) private GarantModel: Model<GarantDocument>,
+  ) {}
+
+  async create(
+    createGarantDto: CreateGarantDto,
+    ownerId: string,
+  ): Promise<GarantDocument> {
+    const creatNewGarant = new this.GarantModel({
+      ...createGarantDto,
+      ownerId: ownerId,
+    });
+    return creatNewGarant.save();
   }
 
-  findAll() {
-    return `This action returns all garant`;
+  //rever isso
+  findAll(ownerId: string) {
+    return this.GarantModel.find({ owner: ownerId }).exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} garant`;
+  async findOne(garantId: string, ownerId: string): Promise<Garant | null> {
+    const garant = await this.GarantModel.findOne({
+      _id: garantId,
+      owner: ownerId,
+    }).exec();
+    if (!garant) {
+      throw new NotFoundException(`Garant non trouvé ou accès refusé`);
+    }
+    return garant;
   }
 
-  update(id: number, updateGarantDto: UpdateGarantDto) {
-    return `This action updates a #${id} garant`;
+  async update(
+    id: string,
+    ownerId: string,
+    updateGarantDto: UpdateGarantDto,
+  ): Promise<Garant | null> {
+    const updateGarant = await this.GarantModel.findOneAndUpdate(
+      { _id: id, owner: ownerId },
+      UpdateGarantDto,
+      {
+        new: true,
+        runValidators: true, // do the validations on UpdateGarantDto
+      },
+    ).exec();
+    if (!updateGarant) {
+      throw new NotFoundException(`Garant non trouvé ou accès refusé`);
+    }
+    return updateGarant;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} garant`;
+  async remove(id: string, ownerId: string): Promise<string | null> {
+    const delGarant = await this.GarantModel.findOneAndDelete({
+      _id: id,
+      owner: ownerId,
+    })
+      .select({ firstName: 1 })
+      .exec();
+
+    if (!delGarant) {
+      throw new NotFoundException(`Garant non trouvé ou accès refusé.`);
+    }
+    return delGarant.firstName;
   }
 }

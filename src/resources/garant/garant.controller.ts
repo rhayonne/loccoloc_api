@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ValidationPipe,
+  Request,
 } from '@nestjs/common';
 import { GarantService } from './garant.service';
 import { CreateGarantDto } from './dto/create-garant.dto';
@@ -17,30 +18,34 @@ export class GarantController {
   constructor(private readonly garantService: GarantService) {}
 
   @Post()
-  create(@Body(ValidationPipe) createGarantDto: CreateGarantDto) {
-    return this.garantService.create(createGarantDto);
+  create(
+    @Body(ValidationPipe) createGarantDto: CreateGarantDto,
+    @Request() req: any,
+  ) {
+    return this.garantService.create(createGarantDto, req.user.userId);
   }
 
   @Get()
-  findAll() {
-    return this.garantService.findAll();
+  findAll(@Request() req: any) {
+    return this.garantService.findAll(req.user.ownerId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.garantService.findOne(+id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.garantService.findOne(id, req.user.userId);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body(ValidationPipe) updateGarantDto: UpdateGarantDto,
+    @Request() req: any,
   ) {
-    return this.garantService.update(+id, updateGarantDto);
+    return this.garantService.update(id, req.user.userID, updateGarantDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.garantService.remove(+id);
+  remove(@Param('id') id: string, @Request() req: any) {
+    return this.garantService.remove(id, req.user.userID);
   }
 }
