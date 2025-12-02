@@ -11,6 +11,7 @@ import { AuthService } from './auth/services/auth.service';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { HttpExceptionFilter } from './util/errors/http-exceptions';
+import { EquipementsModule } from './resources/equipements/equipements.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { HttpExceptionFilter } from './util/errors/http-exceptions';
     AuthModule,
     UserModule,
     GarantModule,
+    EquipementsModule,
   ],
   controllers: [AppController, AuthController],
   providers: [
