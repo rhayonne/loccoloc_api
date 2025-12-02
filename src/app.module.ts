@@ -9,15 +9,19 @@ import { GarantModule } from './resources/garant/garant.module';
 import { AuthController } from './auth/controllers/auth.controller';
 import { AuthService } from './auth/services/auth.service';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { AuthGuard } from '@nestjs/passport';
+// import { AuthGuard } from '@nestjs/passport';
 import { HttpExceptionFilter } from './util/errors/http-exceptions';
 import { EquipementsModule } from './resources/equipements/equipements.module';
+import { Guard } from './auth/guards/jwt-auth-guard';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [`.env.${process.env.NODE_ENV}.local`, `.env.${process.env.NODE_ENV}`],
+      envFilePath: [
+        `.env.${process.env.NODE_ENV}.local`,
+        `.env.${process.env.NODE_ENV}`,
+      ],
     }),
     MongooseModule.forRoot(`${process.env.MONGO_URI}`),
     AuthModule,
@@ -30,7 +34,7 @@ import { EquipementsModule } from './resources/equipements/equipements.module';
     AppService,
     AuthService,
     // Bloq l'accès à tous les route! Utiliser @Public() pour transformer la route en une route ouverte.
-    { provide: APP_GUARD, useClass: AuthGuard('jwt') },
+    { provide: APP_GUARD, useClass: Guard },
 
     // Traiter les erreurs (customisatin des erreurs)
     {
