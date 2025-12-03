@@ -4,28 +4,89 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { Rooms, RoomsDocument } from './schemas/rooms.schemas';
+import { StatusRoomContract, UserRole } from '../support/enum';
+import { Contract } from 'src/contract/schemas/contract.schemas';
 
 @Injectable()
 export class RoomsService {
   constructor(
     @InjectModel(Rooms.name) private roomsModel: Model<RoomsDocument>,
+    @InjectModel(Contract.name) private contractModel: Model<Contract>,
   ) {}
 
-  async create(createRoomDto: CreateRoomDto): Promise<Rooms> {
+  async create(
+    createRoomDto: CreateRoomDto,
+    propertyId: string,
+    userId: string,
+  ): Promise<Rooms> {
     const createdRoom = new this.roomsModel({
       ...createRoomDto,
-      isAvailable: true, // By default, the room is available
-      property: null, // Not yet attached to any property
+      statusRoom: StatusRoomContract.FREE, // By default, the room is available
+      property: propertyId, // Not yet attached to any property
+      owner: userId,
     });
     return createdRoom.save();
   }
 
-  async findAll(): Promise<Rooms[]> {
-    return this.roomsModel.find().populate('property').exec();
+  //find with filters
+  async findRoomsByRole(
+    userId: string,
+    userRole: UserRole,
+    filters: { filter?: string; propertyId?: string; [key: string]: any },
+  ): Promise<Rooms[]> {
+    const query: any = {};
+    const populatedFields = ['property', 'owner'];
+
+    if (userRole === UserRole.PROPRIETAIRE) {
+      // Proprietário: Vê SOMENTE seus quartos
+      query.owner = userId;
+
+      // Filtro Opcional: Se o proprietário estiver filtrando por um imóvel específico
+      if (filters.propertyId) {
+        query.property = filters.propertyId;
+      }
+    } else if (
+      userRole === UserRole.LOCATAIRE ||
+      userRole === UserRole.ANONYMOUS
+    ) {
+      query.isDisponible = true;
+    } else {
+      // Outras Roles (ex: SUPER_ADMIN) - Retorna vazio ou implemente lógica específica
+      //TRABALHAR NESSA LOGICA
+      return [];
+    }
+    if (
+      userRole !== UserRole.PROPRIETAIRE &&
+      filters.filter === 'no_contract'
+    ) {
+      const occupiedRoomIds = await this.getOccupiedRoomIds();
+
+      //permete o locatario procurar por quartos que nao tem contrato nenhum
+      query._id = { $nin: occupiedRoomIds };
+    }
+
+    return this.roomsModel.find(query).populate(populatedFields).exec();
+  }
+
+  //Auxiliates to bring rooms with actives contract
+  private async getOccupiedRoomIds(): Promise<Types.ObjectId[]> {
+    const today = new Date();
+
+    const occupiedContracts = await this.contractModel
+      .find({
+        //verify the contracts active or pending
+        status: {
+          $in: [StatusRoomContract.ACTIVE, StatusRoomContract.PENDING],
+        },
+        endDate: { $gte: today },
+      })
+      .select('roomId')
+      .exec();
+    return occupiedContracts.map((c) => c.roomId);
   }
 
   // ESSENTIAL method: returns only available rooms (not attached)
@@ -33,87 +94,64 @@ export class RoomsService {
     return this.roomsModel.find({ isAvailable: true, property: null }).exec();
   }
 
-  async findOne(id: string): Promise<Rooms> {
-    const room = await this.roomsModel.findById(id).populate('property').exec();
+  async findOne(id: string, ownerId: string): Promise<Rooms> {
+    const room = await this.roomsModel
+      .findOne({ _id: id, owner: ownerId })
+      .populate('property')
+      .exec();
     if (!room) {
-      throw new NotFoundException(`Room with ID ${id} not found`);
+      throw new NotFoundException(`Room non trouvé ou accès refusé.`);
     }
     return room;
   }
 
-  async update(id: string, updateRoomDto: UpdateRoomDto): Promise<Rooms> {
-    const room = await this.roomsModel.findById(id);
-    if (!room) {
-      throw new NotFoundException(`Room with ID ${id} not found`);
-    }
-
-    // Does not allow updating if already attached (except to detach)
-    if (
-      !room.isAvailable &&
-      updateRoomDto.property !== undefined &&
-      updateRoomDto.property !== null
-    ) {
-      throw new BadRequestException(
-        'This room is already attached to a property and cannot be modified',
-      );
-    }
-
+  async update(
+    id: string,
+    ownerId: string,
+    updateRoomDto: UpdateRoomDto,
+  ): Promise<Rooms> {
     const updatedRoom = await this.roomsModel
-      .findByIdAndUpdate(id, updateRoomDto, { new: true })
+      .findOneAndUpdate(
+        { _id: id, owner: ownerId }, //  Double safety filter
+        updateRoomDto,
+        { new: true, runValidators: true },
+      )
       .exec();
 
     if (!updatedRoom) {
-      throw new NotFoundException(`Room with ID ${id} not found after update`);
+      throw new NotFoundException(`Chambre non trouvé ou accès refusé.`);
     }
-
     return updatedRoom;
   }
 
-  // Method to attach a room to a property
-  async attachToProperty(roomId: string, propertyId: string): Promise<Rooms> {
-    const room = await this.roomsModel.findById(roomId);
+  // 6. DELETE (Filter by Owner + Check Contract)
+  async remove(id: string, ownerId: string): Promise<void> {
+    // Verify actives contracts
+    const activeContract = await this.contractModel
+      .findOne({
+        roomId: id,
+        status: {
+          $in: [StatusRoomContract.ACTIVE, StatusRoomContract.PENDING],
+        },
+        endDate: { $gte: new Date() },
+      })
+      .exec();
 
-    if (!room) {
-      throw new NotFoundException(`Room with ID ${roomId} not found`);
-    }
-
-    if (!room.isAvailable) {
+    if (activeContract) {
       throw new BadRequestException(
-        'This room is already attached to another property',
+        `Il est impossible de supprimer une chambre dont le contrat est actif ou en cours de traitement. Contract ID ${activeContract._id} .`,
       );
     }
 
-    room.property = propertyId as any;
-    room.isAvailable = false;
-    return room.save();
-  }
+    // Deleta usando o filtro de segurança (ID E Dono)
+    const delRoom = await this.roomsModel
+      .findOneAndDelete({ _id: id, owner: ownerId })
+      .exec();
 
-  // Method to detach a room from a property (if needed)
-  async detachFromProperty(roomId: string): Promise<Rooms> {
-    const room = await this.roomsModel.findById(roomId);
-
-    if (!room) {
-      throw new NotFoundException(`Room with ID ${roomId} not found`);
-    }
-
-    room.property = undefined as any;
-    room.isAvailable = true;
-    return room.save();
-  }
-
-  async remove(id: string): Promise<void> {
-    const room = await this.roomsModel.findById(id);
-    if (!room) {
-      throw new NotFoundException(`Room with ID ${id} not found`);
-    }
-
-    // Does not allow deletion if attached
-    if (!room.isAvailable) {
-      throw new BadRequestException(
-        'Cannot delete a room that is attached to a property',
+    if (!delRoom) {
+      throw new NotFoundException(
+        `Erreur au supprimer, chambre non trouvé ou accès refusé.`,
       );
     }
-
-    await this.roomsModel.findByIdAndDelete(id).exec();
   }
 }

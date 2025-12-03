@@ -13,6 +13,8 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { HttpExceptionFilter } from './util/errors/http-exceptions';
 import { EquipementsModule } from './resources/equipements/equipements.module';
 import { Guard } from './auth/guards/jwt-auth-guard';
+import { ContractModule } from './contract/contract.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { Guard } from './auth/guards/jwt-auth-guard';
     UserModule,
     GarantModule,
     EquipementsModule,
+    ContractModule,
+    ScheduleModule,
   ],
   controllers: [AppController, AuthController],
   providers: [
