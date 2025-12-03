@@ -6,6 +6,9 @@ import {
   Patch,
   Param,
   Delete,
+  ValidationPipe,
+  Request,
+  Query,
 } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -15,14 +18,23 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
-  @Post()
-  create(@Body() createRoomDto: CreateRoomDto) {
-    return this.roomsService.create(createRoomDto);
+  @Post(':propertyId')
+  createRoomInProperty(
+    @Body(ValidationPipe) createRoomDto: CreateRoomDto,
+    @Param('porpertyId') propertyId: string,
+    @Request() req: any,
+  ) {
+    return this.roomsService.create(createRoomDto, propertyId, req.user.userId);
   }
 
   @Get()
-  findAll() {
-    return this.roomsService.findAll();
+  findAll(
+    @Request() req: any,
+    @Query() filters: { filter?: string; [key: string]: any },
+  ) {
+    const userId = req.user.userId;
+    const userRole = req.user.role;
+    return this.roomsService.findRoomsByRole(userId, userRole, filters);
   }
 
   // ESSENTIAL ENDPOINT: returns only available rooms for frontend select
@@ -31,33 +43,29 @@ export class RoomsController {
     return this.roomsService.findAvailable();
   }
 
+  //find by room id
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.roomsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.roomsService.findOne(id, req.user.userId);
   }
-
+  //update room by property
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRoomDto: UpdateRoomDto) {
-    return this.roomsService.update(id, updateRoomDto);
-  }
-
-  // Endpoint to attach a room to a property
-  @Patch(':roomId/attach/:propertyId')
-  attachToProperty(
-    @Param('roomId') roomId: string,
-    @Param('propertyId') propertyId: string,
+  update(
+    @Body() updateRoomDto: UpdateRoomDto,
+    @Param('id') id: string,
+    @Request() req: any,
   ) {
-    return this.roomsService.attachToProperty(roomId, propertyId);
+    return this.roomsService.update(id, req.user.userId, updateRoomDto);
   }
 
-  // Endpoint to detach a room from a property
-  @Patch(':roomId/detach')
-  detachFromProperty(@Param('roomId') roomId: string) {
-    return this.roomsService.detachFromProperty(roomId);
-  }
+  // // Endpoint to detach a room from a property
+  // @Patch(':roomId/detach')
+  // detachFromProperty(@Param('roomId') roomId: string) {
+  //   return this.roomsService.detachFromProperty(roomId);
+  // }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.roomsService.remove(id);
+  remove(@Param('id') id: string, ownerId: string) {
+    return this.roomsService.remove(id, ownerId);
   }
 }

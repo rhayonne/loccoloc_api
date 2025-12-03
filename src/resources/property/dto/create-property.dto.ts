@@ -32,7 +32,4 @@ export class CreatePropertyDto {
   @IsArray()
   @IsString({ each: true })
   roomIds?: string[]; // IDs of rooms to be attached
-
-  @IsString()
-  owner: string;
 }

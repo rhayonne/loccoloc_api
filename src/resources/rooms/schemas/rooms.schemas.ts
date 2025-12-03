@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { StatusRoomContract } from 'src/resources/support/enum';
 
 export type RoomsDocument = HydratedDocument<Rooms>;
 
@@ -21,9 +22,19 @@ export class Rooms {
   @Prop({ type: Types.ObjectId, ref: 'Property', default: null })
   property: Types.ObjectId;
 
-  // Flag to control if the room has already been attached to a locataire
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  owner: Types.ObjectId;
+
+  @Prop({ enum: StatusRoomContract, default: StatusRoomContract.FREE })
+  statusRoom: StatusRoomContract;
+
+  // // Flag to control if the room has already been attached to a locataire
+  // @Prop({ default: true })
+  // isAvailable: boolean;
+
+  //The owner can choose whether or not the property is available for rent, which will also determine whether or not the property will be listed for viewing.
   @Prop({ default: true })
-  isAvailable: boolean;
+  isDisponible: boolean;
 }
 
 export const RoomsSchema = SchemaFactory.createForClass(Rooms);
